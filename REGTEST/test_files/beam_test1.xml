@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BEAM_CALCULATION>
+    <METADATA>
+        <FILE_ID>beam_test1</FILE_ID>
+        <CREATED_BY>engineer1</CREATED_BY>
+        <DATE>2023-04-01</DATE>
+    </METADATA>
+    <INPUT>
+        <MATERIAL>
+            <TYPE>Steel</TYPE>
+            <STRENGTH>50000</STRENGTH>
+            <DENSITY>7850</DENSITY>
+            <ELASTICITY>200000</ELASTICITY>
+        </MATERIAL>
+        <DIMENSIONS>
+            <LENGTH>120</LENGTH>
+            <WIDTH>10</WIDTH>
+            <HEIGHT>15</HEIGHT>
+            <THICKNESS>0.5</THICKNESS>
+        </DIMENSIONS>
+        <LOAD>
+            <DISTRIBUTED>500</DISTRIBUTED>
+            <POINT_LOAD>1000</POINT_LOAD>
+            <POINT_POSITION>60</POINT_POSITION>
+        </LOAD>
+    </INPUT>
+    <OUTPUT>
+        <MAX_STRESS>18500.0</MAX_STRESS>
+        <MAX_DEFLECTION>3.75</MAX_DEFLECTION>
+        <SECTION_MODULUS>375.0</SECTION_MODULUS>
+        <MOMENT_OF_INERTIA>2812.5</MOMENT_OF_INERTIA>
+        <TOTAL_WEIGHT>14.13</TOTAL_WEIGHT>
+        <SAFETY_FACTOR>2.70</SAFETY_FACTOR>
+    </OUTPUT>
+</BEAM_CALCULATION>

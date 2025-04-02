@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BEAM_CALCULATION>
+    <METADATA>
+        <FILE_ID>beam_test2</FILE_ID>
+        <CREATED_BY>engineer2</CREATED_BY>
+        <DATE>2023-04-02</DATE>
+    </METADATA>
+    <INPUT>
+        <MATERIAL>
+            <TYPE>Aluminum</TYPE>
+            <STRENGTH>35000</STRENGTH>
+            <DENSITY>2700</DENSITY>
+            <ELASTICITY>70000</ELASTICITY>
+        </MATERIAL>
+        <DIMENSIONS>
+            <LENGTH>100</LENGTH>
+            <WIDTH>8</WIDTH>
+            <HEIGHT>12</HEIGHT>
+            <THICKNESS>0.4</THICKNESS>
+        </DIMENSIONS>
+        <LOAD>
+            <DISTRIBUTED>300</DISTRIBUTED>
+            <POINT_LOAD>800</POINT_LOAD>
+            <POINT_POSITION>50</POINT_POSITION>
+        </LOAD>
+    </INPUT>
+    <OUTPUT>
+        <MAX_STRESS>12500.0</MAX_STRESS>
+        <MAX_DEFLECTION>8.24</MAX_DEFLECTION>
+        <SECTION_MODULUS>192.0</SECTION_MODULUS>
+        <MOMENT_OF_INERTIA>1152.0</MOMENT_OF_INERTIA>
+        <TOTAL_WEIGHT>3.46</TOTAL_WEIGHT>
+        <SAFETY_FACTOR>2.80</SAFETY_FACTOR>
+    </OUTPUT>
+</BEAM_CALCULATION>
