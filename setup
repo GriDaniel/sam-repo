@@ -1,0 +1,32 @@
+"""
+Setup script for samuel_regression_lib.
+"""
+
+from setuptools import setup, find_packages
+
+setup(
+    name="samuel_regression_lib",
+    version="0.1.0",
+    description="Regression testing library for XML-based data processing scripts",
+    author="Your Name",
+    author_email="your.email@example.com",
+    packages=find_packages(),
+    install_requires=[
+        "pymongo>=3.12.0",
+    ],
+    entry_points={
+        "console_scripts": [
+            "samuel-regression=samuel_regression_lib.cli:main",
+        ],
+    },
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+    ],
+    python_requires=">=3.7",
+)
