@@ -85,6 +85,7 @@ class Database:
     def store_reference_data(self, filename, method, xml_data, output_data):
         """
         Store reference data for a specific file and method.
+        This method is only used by the CLI tool.
 
         Args:
             filename: Name of the file
@@ -120,6 +121,7 @@ class Database:
                 # Create new entry
                 collection.insert_one({
                     "filename": filename,
+                    "method": method,  # Store method name for easier querying
                     "xml_data": xml_data,
                     "output_data": output_data,
                     "created_at": time.time(),
@@ -130,6 +132,49 @@ class Database:
         except Exception as e:
             print(f"Error storing reference data: {e}")
             return False
+        finally:
+            if self.client:
+                self.client.close()
+
+    def list_reference_data(self, method=None):
+        """
+        List all reference data in the database, optionally filtered by method.
+        This method is only used by the CLI tool.
+
+        Args:
+            method: Optional method name to filter by
+
+        Returns:
+            List of reference data entries with basic metadata
+        """
+        if not self._connect():
+            return []
+
+        results = []
+
+        try:
+            if method:
+                # Query a specific collection
+                collection_name = f"{MONGO_COLLECTION_PREFIX}{method}"
+                if collection_name in self.db.list_collection_names():
+                    collection = self.db[collection_name]
+                    for doc in collection.find({}, {"filename": 1, "created_at": 1, "updated_at": 1}):
+                        doc["method"] = method
+                        results.append(doc)
+            else:
+                # Query all collections
+                for collection_name in self.db.list_collection_names():
+                    if collection_name.startswith(MONGO_COLLECTION_PREFIX):
+                        method = collection_name[len(MONGO_COLLECTION_PREFIX):]
+                        collection = self.db[collection_name]
+                        for doc in collection.find({}, {"filename": 1, "created_at": 1, "updated_at": 1}):
+                            doc["method"] = method
+                            results.append(doc)
+
+            return results
+        except Exception as e:
+            print(f"Error listing reference data: {e}")
+            return []
         finally:
             if self.client:
                 self.client.close()

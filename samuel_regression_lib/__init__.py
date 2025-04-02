@@ -65,33 +65,7 @@ class RegressionTest:
 
         return self
 
-    def add_file(self, filepath, method):
-        """
-        Add reference data to the database for future testing.
-
-        Args:
-            filepath: Path to the XML file
-            method: Method name (e.g., "lq")
-
-        Returns:
-            Success status message
-        """
-        try:
-            with open(filepath, 'r') as f:
-                xml_data = f.read()
-
-            filename = os.path.basename(filepath)  # Extract just the filename from path
-            output_data = self.extractor.extract_output(xml_data)
-
-            # Store in database
-            success = self.db.store_reference_data(filename, method, xml_data, output_data)
-
-            if success:
-                return f"Successfully added reference data for '{filename}' with method '{method}'"
-            else:
-                return f"Failed to add reference data for '{filename}' with method '{method}'"
-        except Exception as e:
-            return f"Error adding reference data: {str(e)}"
+    # No add_file method - this functionality is only available through the CLI
 
     def get_results(self):
         """
@@ -105,8 +79,8 @@ class RegressionTest:
         # Add message about adding missing references if needed
         if self._case_builder.missing_references and not self._case_builder.connection_failed:
             result += "\n\nSome files were not found in the reference database. "
-            result += "You can add them using the add_file method:\n"
-            result += "regression_test.add_file('/path/to/file', 'method_name')"
+            result += "You can add them using the CLI tool:\n"
+            result += "python -m samuel_regression_lib.cli add-reference /path/to/file method_name"
 
         return result
 
