@@ -1,16 +1,11 @@
 import os
 import sys
 import tkinter as tk
-
-# Ensure correct import path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from core.case_builder import CaseBuilder
 from core.db import get_db_connection, check_name_exists, get_metadata
 from core.comparator import compare_metadata
 from core.config import TOLERANCE_LEVEL
 
-# Global instance for library mode
 _app_instance = None
 
 class MainApplication:
@@ -30,7 +25,7 @@ class MainApplication:
             exists, result = check_name_exists(self.db, method_name, filename)
             self.case_builder.append_line(result)
             if not exists:
-                self.case_builder.append_line(f"No reference data for '{filename}' in '{method_name}'")
+                self.case_builder.append_line(f"No reference data for '{filename}'")
                 return False
                 
             reference_metadata, result = get_metadata(self.db, method_name, filename)
@@ -42,10 +37,7 @@ class MainApplication:
             for key, value in comparison.items():
                 status = "PASSED" if value.get("passed", False) else "FAILED"
                 percent_diff = value.get('percent_diff')
-                if percent_diff is not None:
-                    diff = f"{percent_diff:.2f}%"
-                else:
-                    diff = "N/A"
+                diff = f"{percent_diff:.2f}%" if percent_diff is not None else "N/A"
                 self.case_builder.append_line(f"{key}: {status} (Diff: {diff})")
             
             self.case_builder.append_line(f"Overall: {'PASSED' if all_passed else 'FAILED'}")
@@ -59,7 +51,6 @@ class MainApplication:
         self.case_builder.export_to_tkinter(self.text_widget)
         self.root.mainloop()
 
-# Singleton Instance Handling
 def get_app_instance():
     global _app_instance
     if _app_instance is None:
@@ -67,17 +58,7 @@ def get_app_instance():
     return _app_instance
 
 def test_file(filename, method_name, extracted_data):
-    """
-    Test a file using the shared application instance.
-    
-    Args:
-        filename (str): Name of the file
-        method_name (str): Method name for database lookup
-        extracted_data (dict): Extracted metadata from an XML file
-        
-    Returns:
-        bool: True if the test passed, False otherwise
-    """
+    """Test a file using the shared application instance."""
     app = get_app_instance()
     return app.test_file(filename, method_name, extracted_data)
 
@@ -86,10 +67,8 @@ def display_results():
     app = get_app_instance()
     app.display_results()
 
-# Make sure these functions are exported
 __all__ = ['test_file', 'display_results', 'MainApplication', 'get_app_instance']
 
-# Simple entry point without example implementation
 if __name__ == "__main__":
     print("SAM Registry Testing Library")
     print("This module is designed to be imported and used by external scripts.")
