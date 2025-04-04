@@ -1,18 +1,12 @@
 import sys
 import argparse
 from pathlib import Path
-
-# Add the parent directory (project root) to sys.path
-sys.path.append(str(Path(__file__).parent.parent))
-
-# Now you can import from core
 from core.db import get_db_connection, store_document
 from core.extractor import extract_metadata_from_xml
 from core.xml_to_json import xml_to_json
 
-
 def add_file_to_db(file_path: Path, method_name: str, verbose: bool = False) -> bool:
-    """Add an XML file to the database with the full filename, including the .xml extension."""
+    """Add an XML file to the database."""
     if not file_path.is_file() or file_path.suffix.lower() != '.xml':
         print(f"Error: '{file_path}' is not a valid XML file")
         return False
@@ -30,7 +24,6 @@ def add_file_to_db(file_path: Path, method_name: str, verbose: bool = False) -> 
         if verbose:
             print(extract_result, json_result)
 
-        # Store the document with the full filename (including .xml extension)
         store_result = store_document(db, method_name, file_path.name, json_data, metadata)
         if verbose:
             print(store_result)
