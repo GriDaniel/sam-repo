@@ -20,11 +20,6 @@ def extract_metadata_from_xml(file_path):
     
     Returns:
         tuple: A tuple containing a dictionary with keys 'slopes' and 'result' and a result message.
-               Example:
-                   ({
-                       'slopes': [{'Pos': 123.45, 'Sensor': 67.89}, ...],
-                       'result': {'START': 1.0, 'END': 2.0, ...}
-                   }, "Extraction completed successfully.")
     
     Raises:
         ValueError: If any required element is missing or if parsing fails.
@@ -46,19 +41,19 @@ def extract_metadata_from_xml(file_path):
     except Exception as e:
         raise ValueError(f"Error parsing plain text in <Data> as XML: {e}")
     
-    # Extract slopes from the parsed content
+    # Extract slopes from the parsed content (using <PosY> instead of <Pos>)
     slopes = []
     for slope in data_tree.findall(".//SLOPE"):
-        pos_elem = slope.find("Pos")
+        pos_elem = slope.find("PosY")  # Changed from "Pos" to "PosY"
         sensor_elem = slope.find("Sensor")
         if pos_elem is None or sensor_elem is None:
-            raise ValueError("A <SLOPE> element is missing a <Pos> or <Sensor> tag.")
+            raise ValueError("A <SLOPE> element is missing a <PosY> or <Sensor> tag.")
         try:
             pos = float(pos_elem.text)
             sensor = float(sensor_elem.text)
         except Exception as e:
             raise ValueError(f"Invalid numerical value in <SLOPE>: {e}")
-        slopes.append({"Pos": pos, "Sensor": sensor})
+        slopes.append({"PosY": pos, "Sensor": sensor})
     
     # Extract the first RESULT element from the parsed content
     result_elem = data_tree.find(".//RESULT")
