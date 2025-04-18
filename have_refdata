@@ -25,3 +25,46 @@ def have_refdata(plugin):
             print(f"{base}.xml and {base}.json")
     else:
         print("No reference data found")
+
+
+# Test function for a given plugin
+def test_samuel_plugin(plugin):
+    # Step 1: Find matching XML files
+    xml_files = have_refdata(plugin)
+    if not xml_files:
+        pytest.skip(f"No matching XML and JSON files found for {plugin}")
+    
+    # Step 2: Set up the test data folder
+    testdata_dir = os.path.join("Samuel", "Samuel", "testData", plugin)
+    os.makedirs(testdata_dir, exist_ok=True)  # Create folder if it doesn't exist
+    
+    # Step 3: Temporarily move existing files and copy new ones
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Move any existing files to a safe place
+        for file in os.listdir(testdata_dir):
+            old_path = os.path.join(testdata_dir, file)
+            new_path = os.path.join(temp_dir, file)
+            shutil.move(old_path, new_path)
+        
+        # Copy the matching XML files to the test data folder
+        for xml_file in xml_files:
+            shutil.copy(xml_file, testdata_dir)
+        
+        # Step 4: Run Samuel.py with the plugin name
+        samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
+        # Run the script in the background and capture what it prints
+        result = subprocess.run(
+            ["python", samuel_path, plugin],
+            capture_output=True,  # Capture the output
+            text=True  # Get output as text, not bytes
+        )
+        
+        # Step 5: Put the original files back
+        for file in os.listdir(temp_dir):
+            old_path = os.path.join(temp_dir, file)
+            new_path = os.path.join(testdata_dir, file)
+            shutil.move(old_path, new_path)
+        
+        # Step 6: Show the output from Samuel.py
+        print(f"Output from Samuel.py for {plugin}:")
+        print(result.stdout)
