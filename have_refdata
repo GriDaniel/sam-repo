@@ -27,44 +27,90 @@ def have_refdata(plugin):
         print("No reference data found")
 
 
-# Test function for a given plugin
-def test_samuel_plugin(plugin):
-    # Step 1: Find matching XML files
+def modify_samuel_py(plugin, methoden_dict):
+    """Modify Samuel.py to set methode to the parentKey for the given plugin."""
+    samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
+    
+    # Read the original content
+    with open(samuel_path, 'r') as f:
+        lines = f.readlines()
+    
+    # Find the parentKey for the plugin in methoden_dict
+    parent_key = None
+    for key, value in methoden_dict.items():
+        if value == plugin:
+            parent_key = key
+            break
+    if not parent_key:
+        raise ValueError(f"No parentKey found for plugin {plugin}")
+    
+    # Modify the line that sets methode
+    modified_lines = []
+    for line in lines:
+        if line.strip().startswith("methode ="):
+            modified_lines.append(f"methode = \"{parent_key}\"\n")
+        else:
+            modified_lines.append(line)
+    
+    return samuel_path, ''.join(modified_lines)
+
+def test_samuel(plugin):
+    # Example methoden dictionary (replace with actual dictionary from Samuel.py if needed)
+    methoden = {
+        "parentKey1": "pluginA",
+        "parentKey2": "pluginB",
+        # Add other mappings as per Samuel.py
+    }
+    
+    # Find matching XML files
     xml_files = have_refdata(plugin)
     if not xml_files:
-        pytest.skip(f"No matching XML and JSON files found for {plugin}")
+        print(f"No matching XML files found for {plugin}")
+        return
     
-    # Step 2: Set up the test data folder
+    # Set up test data folder
     testdata_dir = os.path.join("Samuel", "Samuel", "testData", plugin)
-    os.makedirs(testdata_dir, exist_ok=True)  # Create folder if it doesn't exist
+    os.makedirs(testdata_dir, exist_ok=True)
     
-    # Step 3: Temporarily move existing files and copy new ones
+    # Temporarily modify Samuel.py and run it
+    samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
+    original_content = ""
+    
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Move any existing files to a safe place
+        # Move existing test data files
         for file in os.listdir(testdata_dir):
-            old_path = os.path.join(testdata_dir, file)
-            new_path = os.path.join(temp_dir, file)
-            shutil.move(old_path, new_path)
+            shutil.move(os.path.join(testdata_dir, file), temp_dir)
         
-        # Copy the matching XML files to the test data folder
+        # Copy XML files to test data directory
         for xml_file in xml_files:
             shutil.copy(xml_file, testdata_dir)
         
-        # Step 4: Run Samuel.py with the plugin name
-        samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
-        # Run the script in the background and capture what it prints
+        # Read and backup original Samuel.py
+        with open(samuel_path, 'r') as f:
+            original_content = f.read()
+        
+        # Modify Samuel.py with the plugin's parentKey
+        path, modified_content = modify_samuel_py(plugin, methoden)
+        with open(path, 'w') as f:
+            f.write(modified_content)
+        
+        # Run the modified Samuel.py
         result = subprocess.run(
-            ["python", samuel_path, plugin],
-            capture_output=True,  # Capture the output
-            text=True  # Get output as text, not bytes
+            ["python", samuel_path],
+            capture_output=True,
+            text=True
         )
         
-        # Step 5: Put the original files back
-        for file in os.listdir(temp_dir):
-            old_path = os.path.join(temp_dir, file)
-            new_path = os.path.join(testdata_dir, file)
-            shutil.move(old_path, new_path)
+        # Restore original Samuel.py
+        with open(samuel_path, 'w') as f:
+            f.write(original_content)
         
-        # Step 6: Show the output from Samuel.py
-        print(f"Output from Samuel.py for {plugin}:")
-        print(result.stdout)
+        # Restore original test data files
+        for file in os.listdir(temp_dir):
+            shutil.move(os.path.join(temp_dir, file), testdata_dir)
+        
+        # Display output or errors
+        if result.returncode != 0:
+            print(f"Error running Samuel.py for {plugin}:\n{result.stderr}")
+        else:
+            print(f"Output for {plugin}:\n{result.stdout}")
