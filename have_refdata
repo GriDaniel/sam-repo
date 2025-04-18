@@ -1,0 +1,27 @@
+import os
+
+def have_refdata(plugin):
+    base_dir = "samreglib/testData"
+    plugin_dir = os.path.join(base_dir, plugin)
+    
+    if not os.path.isdir(plugin_dir):
+        print(f"'{plugin}' does not exist in '{base_dir}'.")
+        return
+    
+    print(f"Found '{plugin}' in '{base_dir}'.")
+    
+    files = os.listdir(plugin_dir)
+    xml_files = [f for f in files if f.endswith('.xml') and os.path.isfile(os.path.join(plugin_dir, f))]
+    json_files = [f for f in files if f.endswith('.json') and os.path.isfile(os.path.join(plugin_dir, f))]
+    
+    xml_bases = {os.path.splitext(f)[0] for f in xml_files}
+    json_bases = {os.path.splitext(f)[0] for f in json_files}
+    
+    matching_bases = sorted(list(xml_bases.intersection(json_bases)))
+    
+    if matching_bases:
+        print("The following reference data was found:")
+        for base in matching_bases:
+            print(f"{base}.xml and {base}.json")
+    else:
+        print("No reference data found")
