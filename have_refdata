@@ -27,86 +27,19 @@ def have_refdata(plugin):
         print("No reference data found")
 
 
-def modify_samuel_py(plugin, methoden_dict):
-    """Modify Samuel.py to set methode to the parentKey for the given plugin."""
-    samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
-    
-    with open(samuel_path, 'r') as f:
-        lines = f.readlines()
-    
-    parent_key = None
-    for key, value in methoden_dict.items():
-        if value == plugin:
-            parent_key = key
-            break
-    if not parent_key:
-        raise ValueError(f"No parentKey found for plugin {plugin}")
-    
-    modified_lines = []
-    for line in lines:
-        if line.strip().startswith("methode ="):
-            modified_lines.append(f"methode = \"{parent_key}\"\n")
-        else:
-            modified_lines.append(line)
-    
-    return samuel_path, ''.join(modified_lines)
-
-def test_samuel(plugin):
-    """Test Samuel.py by running it with the specified plugin."""
-    methoden = {
-        "parentKey1": "pluginA",
-        "parentKey2": "pluginB",
-        # Add other mappings as needed
-    }
-    
-    xml_files = have_refdata(plugin)
-    if not xml_files:
-        print(f"No matching XML files found for {plugin}")
-        return
-    
-    testdata_dir = os.path.join("Samuel", "Samuel", "testData", plugin)
-    os.makedirs(testdata_dir, exist_ok=True)
-    
-    samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
-    original_content = ""
-    
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Move existing test data files
-        for file in os.listdir(testdata_dir):
-            shutil.move(os.path.join(testdata_dir, file), temp_dir)
-        
-        # Copy XML files to test data directory
-        for xml_file in xml_files:
-            shutil.copy(xml_file, testdata_dir)
-        
-        # Backup original Samuel.py
-        with open(samuel_path, 'r') as f:
-            original_content = f.read()
-        
-        # Modify Samuel.py
-        path, modified_content = modify_samuel_py(plugin, methoden)
-        with open(path, 'w') as f:
-            f.write(modified_content)
-        
-        # Run Samuel.py with cwd set to the solution directory (Samuel)
-        solution_dir = "Samuel"  # Directory containing Samuel.sln
-        result = subprocess.run(
-            ["python", samuel_path],
-            capture_output=True,
-            text=True,
-            cwd=solution_dir
-        )
-        
-        # Restore original Samuel.py
-        with open(samuel_path, 'w') as f:
-            f.write(original_content)
-        
-        # Restore original test data files
-        for file in os.listdir(temp_dir):
-            shutil.move(os.path.join(temp_dir, file), testdata_dir)
-        
-        # Display results
-        if result.returncode != 0:
-            print(f"Error running Samuel.py for {plugin}:\n{result.stderr}")
-        else:
-            print(f"Output for {plugin}:\n{result.stdout}")
+def run_samuel():
+    """Run Samuel.py and output the results to the pipeline."""
+    # Set working directory to Samuel/Samuel, where Samuel.py is located
+    solution_dir = os.path.join("Samuel", "Samuel")
+    samuel_path = "Samuel.py"  # Path relative to the working directory
+    result = subprocess.run(
+        ["python", samuel_path],
+        capture_output=True,
+        text=True,
+        cwd=solution_dir
+    )
+    # Print output for pipeline logging
+    print(result.stdout)
+    # Print errors if any
+    if result.stderr:
+        print(f"Errors: {result.stderr}")
