@@ -31,11 +31,9 @@ def modify_samuel_py(plugin, methoden_dict):
     """Modify Samuel.py to set methode to the parentKey for the given plugin."""
     samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
     
-    # Read the original content
     with open(samuel_path, 'r') as f:
         lines = f.readlines()
     
-    # Find the parentKey for the plugin in methoden_dict
     parent_key = None
     for key, value in methoden_dict.items():
         if value == plugin:
@@ -44,7 +42,6 @@ def modify_samuel_py(plugin, methoden_dict):
     if not parent_key:
         raise ValueError(f"No parentKey found for plugin {plugin}")
     
-    # Modify the line that sets methode
     modified_lines = []
     for line in lines:
         if line.strip().startswith("methode ="):
@@ -55,24 +52,21 @@ def modify_samuel_py(plugin, methoden_dict):
     return samuel_path, ''.join(modified_lines)
 
 def test_samuel(plugin):
-    # Example methoden dictionary (replace with actual dictionary from Samuel.py if needed)
+    """Test Samuel.py by running it with the specified plugin."""
     methoden = {
         "parentKey1": "pluginA",
         "parentKey2": "pluginB",
-        # Add other mappings as per Samuel.py
+        # Add other mappings as needed
     }
     
-    # Find matching XML files
     xml_files = have_refdata(plugin)
     if not xml_files:
         print(f"No matching XML files found for {plugin}")
         return
     
-    # Set up test data folder
     testdata_dir = os.path.join("Samuel", "Samuel", "testData", plugin)
     os.makedirs(testdata_dir, exist_ok=True)
     
-    # Temporarily modify Samuel.py and run it
     samuel_path = os.path.join("Samuel", "Samuel", "Samuel.py")
     original_content = ""
     
@@ -85,20 +79,22 @@ def test_samuel(plugin):
         for xml_file in xml_files:
             shutil.copy(xml_file, testdata_dir)
         
-        # Read and backup original Samuel.py
+        # Backup original Samuel.py
         with open(samuel_path, 'r') as f:
             original_content = f.read()
         
-        # Modify Samuel.py with the plugin's parentKey
+        # Modify Samuel.py
         path, modified_content = modify_samuel_py(plugin, methoden)
         with open(path, 'w') as f:
             f.write(modified_content)
         
-        # Run the modified Samuel.py
+        # Run Samuel.py with cwd set to the solution directory (Samuel)
+        solution_dir = "Samuel"  # Directory containing Samuel.sln
         result = subprocess.run(
             ["python", samuel_path],
             capture_output=True,
-            text=True
+            text=True,
+            cwd=solution_dir
         )
         
         # Restore original Samuel.py
@@ -109,7 +105,7 @@ def test_samuel(plugin):
         for file in os.listdir(temp_dir):
             shutil.move(os.path.join(temp_dir, file), testdata_dir)
         
-        # Display output or errors
+        # Display results
         if result.returncode != 0:
             print(f"Error running Samuel.py for {plugin}:\n{result.stderr}")
         else:
