@@ -2,64 +2,41 @@ import os
 import shutil
 import subprocess
 import tempfile
-import pytest
 
-# Function to check for reference data and trigger the test
 def have_refdata(plugin):
     base_dir = "samreglib/testData"
     plugin_dir = os.path.join(base_dir, plugin)
     
-    # Check if the plugin directory exists
     if not os.path.isdir(plugin_dir):
         print(f"'{plugin}' does not exist in '{base_dir}'.")
         return
     
     print(f"Found '{plugin}' in '{base_dir}'.")
     
-    # Get list of XML and JSON files in the plugin directory
     files = os.listdir(plugin_dir)
     xml_files = [f for f in files if f.endswith('.xml') and os.path.isfile(os.path.join(plugin_dir, f))]
     json_files = [f for f in files if f.endswith('.json') and os.path.isfile(os.path.join(plugin_dir, f))]
     
-    # Find matching base names (without extensions)
     xml_bases = {os.path.splitext(f)[0] for f in xml_files}
     json_bases = {os.path.splitext(f)[0] for f in json_files}
+    
     matching_bases = sorted(list(xml_bases.intersection(json_bases)))
     
     if matching_bases:
         print("The following reference data was found:")
         for base in matching_bases:
             print(f"{base}.xml and {base}.json")
-        # Prepare XML files to pass to the test
         matching_xml_files = [f"{base}.xml" for base in matching_bases]
-        # Run the pytest test programmatically
-        pytest.main(["--plugin", plugin, "--xml_files", ",".join(matching_xml_files), __file__])
+        test_samuel_plugin(plugin, matching_xml_files)
     else:
         print("No reference data found")
 
-# Define custom command-line options for pytest
-def pytest_addoption(parser):
-    parser.addoption("--plugin", action="store", default="", help="Plugin name to test")
-    parser.addoption("--xml_files", action="store", default="", help="Comma-separated list of XML files")
-
-# Pytest test function
-def test_samuel_plugin(request):
-    # Get plugin name and XML files from command-line options
-    plugin = request.config.getoption("--plugin")
-    xml_files = request.config.getoption("--xml_files").split(",") if request.config.getoption("--xml_files") else []
-    
-    # Check if required arguments are provided
-    if not plugin or not xml_files:
-        print("No plugin or XML files provided.")
-        return
-    
-    # Define directories
+def test_samuel_plugin(plugin, matching_xml_files):
     source_dir = os.path.join("samreglib", "testData", plugin)
     samuel_dir = os.path.join("Samuel", "Samuel")
     target_dir = os.path.join(samuel_dir, "testData", plugin)
     os.makedirs(target_dir, exist_ok=True)
     
-    # Use a temporary directory to backup files
     with tempfile.TemporaryDirectory() as backup_dir:
         # Backup existing files in target directory
         for item in os.listdir(target_dir):
@@ -67,8 +44,8 @@ def test_samuel_plugin(request):
             if os.path.isfile(item_path):
                 shutil.move(item_path, os.path.join(backup_dir, item))
         
-        # Copy matching XML files to target directory
-        for xml_file in xml_files:
+        # Copy the provided matching XML files to target directory
+        for xml_file in matching_xml_files:
             src_path = os.path.join(source_dir, xml_file)
             dst_path = os.path.join(target_dir, xml_file)
             shutil.copy2(src_path, dst_path)
@@ -89,7 +66,7 @@ def test_samuel_plugin(request):
             f.writelines(lines)
         
         try:
-            # Run Samuel.py and capture its output
+            # Run Samuel.py and capture output
             result = subprocess.run(
                 ["python", "Samuel.py"],
                 capture_output=True,
@@ -108,6 +85,3 @@ def test_samuel_plugin(request):
             # Restore original files from backup
             for item in os.listdir(backup_dir):
                 shutil.move(os.path.join(backup_dir, item), os.path.join(target_dir, item))
-
-if __name__ == "__main__":
-    have_refdata("example_plugin")
