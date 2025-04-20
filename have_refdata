@@ -1,4 +1,7 @@
 import os
+import shutil
+import subprocess
+import tempfile
 
 def have_refdata(plugin):
     base_dir = "samreglib/testData"
@@ -23,23 +26,65 @@ def have_refdata(plugin):
         print("The following reference data was found:")
         for base in matching_bases:
             print(f"{base}.xml and {base}.json")
+        matching_xml_files = [f"{base}.xml" for base in matching_bases]
+        test_samuel_plugin(plugin, matching_xml_files)
     else:
         print("No reference data found")
 
+def test_samuel_plugin(plugin, matching_xml_files):
+    source_dir = os.path.join("samreglib", "testData", plugin)
+    samuel_dir = os.path.join("Samuel", "Samuel")
+    target_dir = os.path.join(samuel_dir, "testData", plugin)
+    os.makedirs(target_dir, exist_ok=True)
+    
+    with tempfile.TemporaryDirectory() as backup_dir:
+        # Backup existing files in target directory
+        for item in os.listdir(target_dir):
+            item_path = os.path.join(target_dir, item)
+            if os.path.isfile(item_path):
+                shutil.move(item_path, os.path.join(backup_dir, item))
+        
+        # Copy the provided matching XML files to target directory
+        for xml_file in matching_xml_files:
+            src_path = os.path.join(source_dir, xml_file)
+            dst_path = os.path.join(target_dir, xml_file)
+            shutil.copy2(src_path, dst_path)
+        
+        # Modify Samuel.py to set methode = "plugin"
+        samuel_py_path = os.path.join(samuel_dir, "Samuel.py")
+        with open(samuel_py_path, "r") as f:
+            lines = f.readlines()
+        original_lines = lines.copy()
+        for i, line in enumerate(lines):
+            if line.strip().startswith("methode ="):
+                lines[i] = 'methode = "plugin"\n'
+                break
+        else:
+            print(f"Warning: 'methode' variable not found in '{samuel_py_path}'.")
+            return
+        with open(samuel_py_path, "w") as f:
+            f.writelines(lines)
+        
+        try:
+            # Run Samuel.py and capture output
+            result = subprocess.run(
+                ["python", "Samuel.py"],
+                capture_output=True,
+                text=True,
+                cwd=samuel_dir
+            )
+            print("Samuel.py output:")
+            print(result.stdout)
+            if result.stderr:
+                print("Errors:")
+                print(result.stderr)
+        finally:
+            # Restore Samuel.py to its original state
+            with open(samuel_py_path, "w") as f:
+                f.writelines(original_lines)
+            # Restore original files from backup
+            for item in os.listdir(backup_dir):
+                shutil.move(os.path.join(backup_dir, item), os.path.join(target_dir, item))
 
-def run_samuel():
-    """Run Samuel.py and output the results to the pipeline."""
-    # Set working directory to Samuel/Samuel, where Samuel.py is located
-    solution_dir = os.path.join("Samuel", "Samuel")
-    samuel_path = "Samuel.py"  # Path relative to the working directory
-    result = subprocess.run(
-        ["python", samuel_path],
-        capture_output=True,
-        text=True,
-        cwd=solution_dir
-    )
-    # Print output for pipeline logging
-    print(result.stdout)
-    # Print errors if any
-    if result.stderr:
-        print(f"Errors: {result.stderr}")
+if __name__ == "__main__":
+    have_refdata("example_plugin")
